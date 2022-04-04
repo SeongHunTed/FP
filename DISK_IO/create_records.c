@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 
 	if(argc != 3)
 	{
-		fprintf(stderr, "Usage : %s <#records> <record_file_name>");
+		fprintf(stderr, "Usage : %s <#records> <record_file_name>", argv[1]);
 		exit(1);
 	}
 
@@ -28,8 +28,8 @@ int main(int argc, char **argv)
 		fprintf(stderr, "open error for %s\n", argv[2]);
 		exit(1);
 	}
-
-	buf = (char*)calloc(studentRecord, sizeof(char));
+	
+	buf = (char*)calloc(200, sizeof(char));
 
 	for(int i = 0; i<num; i++)
 	{
