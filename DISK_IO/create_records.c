@@ -15,7 +15,12 @@ int main(int argc, char **argv)
 	int num = atoi(argv[1]); //records 수
 	int fd; //파일디스크립터
 	char* buf;
-	int studentRecord[50] = {'0'*50};
+	int studentRecord[50];
+
+	for(int i = 0; i<50; i++)
+	{
+		studentRecord[i] = i;
+	}
 
 	if(argc != 3)
 	{
