@@ -8,19 +8,25 @@
 #define RECORD_SIZE 200
 #define S_MODE 0644
 
+
+
 int main(int argc, char **argv)
 {
-	
 	// 사용자로부터 입력 받은 레코드 수 만큼의 레코드 파일을 생성하는 코드 구현
 	int num = atoi(argv[1]); //records 수
 	int fd; //파일디스크립터
-	char* buf;
-	int studentRecord[50];
 
-	for(int i = 0; i<50; i++)
-	{
-		studentRecord[i] = i;
-	}
+    typedef struct Student{
+	char name[40];
+	char address[60];
+	char stdNum[100];
+    } std;
+
+	struct Student s1 = {"Name : SeongHunKim", "Address : Ilsan", "Student Number : 20181065"};
+
+	struct Student *buf = (struct Student *)calloc(200, sizeof(struct Student));
+
+	buf = &s1;
 
 	if(argc != 3)
 	{
@@ -34,13 +40,10 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	
-	buf = (char*)calloc(200, sizeof(char));
-
 	for(int i = 0; i<num; i++)
 	{
-		read(fd, buf, RECORD_SIZE);
 		write(fd, buf, RECORD_SIZE);
-		lseek(fd, 0, SEEK_END);
+		// lseek(fd, 0, SEEK_END);
 	}
 
 	exit(0);
