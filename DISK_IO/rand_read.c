@@ -100,5 +100,5 @@ void runtime(struct timeval *begin, struct timeval *end)
 	}
 
 	end->tv_usec -= begin->tv_usec;
-	printf("%d usec", end->tv_usec);
+	printf("%ld usec", end->tv_usec);
 }
