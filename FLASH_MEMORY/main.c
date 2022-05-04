@@ -33,12 +33,19 @@ int main( )
 	}
 
 	ftl_open();
+	
 
 	//
 	// ftl_write() 및 ftl_read() 테스트를 위한 코드를 자유자재로 만드세요.
 	// 채점할 때 이 부분에 테스트 코드를 심어서 합니다. Flash memory에 대한 데이터의 읽기 및 쓰기가
 	// 올바르게 동작하는지를 테스트하고, 필요하면 다른 부분도 검사를 합니다.
 	//
+
+	lsn = 33;
+	strcpy(sectorbuf, "For the test");
+
+	ftl_write(lsn, sectorbuf);
+	ftl_read(lsn, sectorbuf);
 
 	free(blockbuf);
 	fclose(devicefp);

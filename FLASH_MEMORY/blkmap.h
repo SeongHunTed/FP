@@ -17,7 +17,15 @@
 //
 // 필요하면 상수를 추가해서 사용 가능함
 // 
+void ftl_open();
+void ftl_write(int lsn, char *sectorbuf);
+void ftl_read(int lsn, char *sectorbuf);
+// void print_block(int pbn);
+// void print_addrmaptbl();
 
+int dd_read(int ppn, char *pagebuf);
+int dd_write(int ppn, char *pagebuf);
+int dd_erase(int pbn);
 //
 // flash memory의 spare area를 다루기 위한 구조체
 //
