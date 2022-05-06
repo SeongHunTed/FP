@@ -8,10 +8,10 @@
 #define	SPARE_SIZE		16			
 #define	PAGE_SIZE		(SECTOR_SIZE+SPARE_SIZE)
 #define 	SECTORS_PER_PAGE	1
-#define	PAGES_PER_BLOCK		32					// 수정 가능
+#define	PAGES_PER_BLOCK		4					// 수정 가능
 #define	SECTORS_PER_BLOCK	(SECTORS_PER_PAGE*PAGES_PER_BLOCK)
 #define	BLOCK_SIZE		(PAGE_SIZE*PAGES_PER_BLOCK)
-#define	BLOCKS_PER_DEVICE	1024					// 수정 가능
+#define	BLOCKS_PER_DEVICE	16					// 수정 가능
 #define	DEVICE_SIZE		(BLOCK_SIZE*BLOCKS_PER_DEVICE)
 #define	DATABLKS_PER_DEVICE	(BLOCKS_PER_DEVICE - 1)			// spare block로서 블록 하나를 사용
 //

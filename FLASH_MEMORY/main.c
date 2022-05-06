@@ -41,13 +41,18 @@ int main( )
 	// 올바르게 동작하는지를 테스트하고, 필요하면 다른 부분도 검사를 합니다.
 	//
 
-	lsn = 120;
-	strcpy(sectorbuf, "For the test");
+	lsn = 1;
+	strcpy(sectorbuf, "");
 
 	ftl_write(lsn, sectorbuf);
 	ftl_read(lsn, sectorbuf);
 
-	lsn = 240;
+	lsn = 2;
+
+	ftl_write(lsn, sectorbuf);
+	ftl_read(lsn, sectorbuf);
+
+	lsn = 3;
 	ftl_write(lsn, sectorbuf);
 	ftl_read(lsn, sectorbuf);
 	

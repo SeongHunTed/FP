@@ -63,67 +63,80 @@ void ftl_write(int lsn, char *sectorbuf)
 	// overwrite를 해결하고 난 후 당연히 reserved_empty_blk는 overwrite를 유발시킨 (invalid) block이 되어야 함
 	// 따라서 reserved_empty_blk는 고정되어 있는 것이 아니라 상황에 따라 계속 바뀔 수 있음
 	//
-	int reserved_empty_blk = DATABLKS_PER_DEVICE;
-	int empty_blk_ppn = reserved_empty_blk / PAGE_SIZE;
 
-	int pbn = lsn / PAGES_PER_BLOCK;							// 논리 블럭
-	int offset = lsn % PAGES_PER_BLOCK;							// offset
+	int reserved_empty_blk = DATABLKS_PER_DEVICE; // 블락들의 맨 마지막
 
-	int ppn = pbn * PAGES_PER_BLOCK + offset;					// physical page number
+	int lbn = lsn / PAGES_PER_BLOCK;								// 논리 블럭 = 0
+	int offset = lsn % PAGES_PER_BLOCK;								// offset = 1
+	int ppn = ((DATABLKS_PER_DEVICE) -1 - lbn) * PAGES_PER_BLOCK + offset;   // 15-1-0 * 4 + 1 = 57
+	// int ppn = pbn * PAGES_PER_BLOCK + offset;					// physical page number
 	
 	char pagebuf[PAGE_SIZE];
 
-	int check = addrmaptbl.pbn[pbn];
+	int check = addrmaptbl.pbn[lbn];
 
 	SpareData sd = {lsn, ""};
-	
-	memset(pagebuf, (char)0xFF, PAGE_SIZE);
-	// memcpy(pagebuf, sectorbuf, sizeof(PAGE_SIZE)); 				// page에 sector만큼 넣어줌
-	// memcpy(pagebuf + SECTOR_SIZE, &sd, sizeof(SPARE_SIZE));		// page에 spare 만큼 넣어 page완성
-
 		
-	if(check == -1){											// 블럭이 비어있는 경우
-		// memset(pagebuf, (char)0xFF, PAGE_SIZE);
-		memcpy(pagebuf, sectorbuf, sizeof(PAGE_SIZE)); 				// page에 sector만큼 넣어줌
-		memmove(pagebuf + SECTOR_SIZE, &sd, sizeof(SPARE_SIZE));		
+	if(check == -1){		
+		printf("Block is Empty!\n");	
+		memset(pagebuf, (char)0xFF, PAGE_SIZE);									// 블럭이 비어있는 경우
+		memcpy(pagebuf, sectorbuf, sizeof(PAGE_SIZE)); 							// page에 sector만큼 넣어줌
+		memcpy(pagebuf + SECTOR_SIZE, &sd, sizeof(SPARE_SIZE));		
 		dd_write(ppn, pagebuf);
-		addrmaptbl.pbn[pbn] = pbn;								// 논리주소 == 물리주소 일단 일치화 기준
+		addrmaptbl.pbn[lbn] = DATABLKS_PER_DEVICE - lbn -1;						// 논리주소 -> 물리주소 교재 기준하에 생성
 	} else {
-		empty_blk_ppn += offset;
-		for (int i = 1; i < PAGES_PER_BLOCK; i++){  // 빈 블럭에 데이터 복사
-			if(++ppn % PAGES_PER_BLOCK == 0){
-				ppn = ppn - PAGES_PER_BLOCK;
+		printf("Block overwritting\n");					// overwrite 경우 data update
+
+		int empty_blk_ppn = reserved_empty_blk * PAGES_PER_BLOCK; //60 -> 61 -> 62 -> 63
+		int empty_check;
+		
+		for(int i = 0; i < PAGES_PER_BLOCK; i++){
+			dd_read(empty_blk_ppn, pagebuf);
+			memcpy(&empty_check, pagebuf+SECTOR_SIZE, 4);
+
+			if(empty_check != -1){
+				// 랜덤 reserved block
+				// 랜덤 블락 체크 -> addrmaptbl
+				// 새로운 블락에 다 옮김
+				// 물리주소까지 변경
+				// 지우기까지
+				while(1){
+					srand(time(NULL));
+					reserved_empty_blk = rand() % DATABLKS_PER_DEVICE;			// 랜덤으로 블락 지정
+					if(addrmaptbl.pbn[reserved_empty_blk] != -1) break;			// 랜덤으로 접근 한 블럭이 비었을 때
+				}
+				break;
 			}
-			dd_read(ppn, pagebuf);
+			empty_blk_ppn++;
+		}
+
+		ppn = addrmaptbl.pbn[lbn] * PAGES_PER_BLOCK;
+		empty_blk_ppn = reserved_empty_blk * PAGES_PER_BLOCK;
+		printf("ppn : %d\n", ppn);
+		printf("empty block : %d\n", reserved_empty_blk);
+
+		for (int i = 0; i < PAGES_PER_BLOCK; i++){  // 빈 블럭에 데이터 복사
+			// if(++ppn % PAGES_PER_BLOCK == 0){
+			// 	ppn = ppn - PAGES_PER_BLOCK;
+			// 	empty_blk_ppn = empty_blk_ppn - PAGES_PER_BLOCK;
+			// }
+			printf("read & write %d to %d\n", ppn, empty_blk_ppn);
+			dd_read(ppn++, pagebuf);
 			dd_write(empty_blk_ppn++, pagebuf);
 		}
 
-		dd_erase(pbn);	// 해당 블럭 초기화
-
-		// 복사한 데이터 쓰기
-		for(int i = 0; i < PAGES_PER_BLOCK; i++){
-			++empty_blk_ppn;
-			++ppn;
-			if(empty_blk_ppn % PAGES_PER_BLOCK == 0 && ppn % PAGES_PER_BLOCK == 0){
-				empty_blk_ppn = empty_blk_ppn - PAGES_PER_BLOCK;
-				ppn = ppn -PAGES_PER_BLOCK;
-			}
-			dd_read(empty_blk_ppn, pagebuf);
-			dd_write(ppn, pagebuf);
-		}
-
-		dd_erase(reserved_empty_blk);
-
-		// memset(pagebuf, (char)0xFF, PAGE_SIZE);
+		memset(pagebuf, (char)0xFF, PAGE_SIZE);
 		memcpy(pagebuf, sectorbuf, sizeof(PAGE_SIZE)); 				// page에 sector만큼 넣어줌
-		memmove(pagebuf + SECTOR_SIZE, &sd, sizeof(SPARE_SIZE));	
-		dd_write(ppn, pagebuf);
-		addrmaptbl.pbn[pbn] = pbn;
+		memcpy(pagebuf + SECTOR_SIZE, &sd, sizeof(SPARE_SIZE));	
+
+		dd_erase(addrmaptbl.pbn[lbn]);	// 해당 블럭 초기화
+
+		empty_blk_ppn = reserved_empty_blk * PAGES_PER_BLOCK + offset;
+		dd_write(empty_blk_ppn, pagebuf);
+
+		addrmaptbl.pbn[lbn] = reserved_empty_blk;
 		
-		reserved_empty_blk = rand() % BLOCKS_PER_DEVICE;
 	}
-
-
 	return;
 }
 
@@ -136,17 +149,18 @@ void ftl_read(int lsn, char *sectorbuf)
 #ifdef PRINT_FOR_DEBUG			// 필요 시 현재의 block mapping table을 출력해 볼 수 있음
 	print_addrmaptbl();
 #endif
+	int lbn = lsn / PAGES_PER_BLOCK;					// 0
+	int offset = lsn % PAGES_PER_BLOCK;					// 1 % 32 = 1
+	int pbn = addrmaptbl.pbn[lbn];						// 1022
+	
+	int ppn = ((DATABLKS_PER_DEVICE) -1 - lbn) * PAGES_PER_BLOCK + offset;			// (1022 - lbn ) *pn + offset
 
-	int lbn = lsn / PAGES_PER_BLOCK;
-	int offset = lsn % PAGES_PER_BLOCK;
-	int pbn = addrmaptbl.pbn[lbn];
-	int ppn = pbn * PAGES_PER_BLOCK + offset;
-
-	if(addrmaptbl.pbn[pbn] == -1) return;
+	if(addrmaptbl.pbn[lbn] < 0) return;
 
 	char pagebuf[PAGE_SIZE];
 	dd_read(ppn, pagebuf);
-	memcpy(sectorbuf, pagebuf, sizeof(SECTOR_SIZE));
+	memcpy(pagebuf, sectorbuf, sizeof(SECTOR_SIZE));
+
 	print_block(pbn);
 
 	return;
