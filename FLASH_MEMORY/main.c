@@ -42,13 +42,17 @@ int main( )
 	//
 
 	lsn = 1;
-	strcpy(sectorbuf, "");
+	strcpy(sectorbuf, "fuck");
 
 	ftl_write(lsn, sectorbuf);
 	ftl_read(lsn, sectorbuf);
 
 	lsn = 2;
 
+	ftl_write(lsn, sectorbuf);
+	ftl_read(lsn, sectorbuf);
+
+	lsn = 8;
 	ftl_write(lsn, sectorbuf);
 	ftl_read(lsn, sectorbuf);
 
