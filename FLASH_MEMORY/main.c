@@ -55,6 +55,11 @@ int main( )
 	lsn = 3;
 	ftl_write(lsn, sectorbuf);
 	ftl_read(lsn, sectorbuf);
+
+	lsn = 0;
+	ftl_write(lsn, sectorbuf);
+	ftl_read(lsn, sectorbuf);
+
 	
 
 	free(blockbuf);
