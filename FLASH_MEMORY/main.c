@@ -42,25 +42,28 @@ int main( )
 	//
 
 	lsn = 1;
-	strcpy(sectorbuf, "fuck");
+	strcpy(sectorbuf, "no1");
 
 	ftl_write(lsn, sectorbuf);
 	ftl_read(lsn, sectorbuf);
 
 	lsn = 2;
-
+	strcpy(sectorbuf, "no2");
 	ftl_write(lsn, sectorbuf);
 	ftl_read(lsn, sectorbuf);
 
 	lsn = 8;
+	strcpy(sectorbuf, "no8");
 	ftl_write(lsn, sectorbuf);
 	ftl_read(lsn, sectorbuf);
 
 	lsn = 3;
+	strcpy(sectorbuf, "no3");
 	ftl_write(lsn, sectorbuf);
 	ftl_read(lsn, sectorbuf);
 
 	lsn = 0;
+	strcpy(sectorbuf, "no0");
 	ftl_write(lsn, sectorbuf);
 	ftl_read(lsn, sectorbuf);
 
