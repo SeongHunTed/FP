@@ -29,29 +29,13 @@ enum FIELD getFieldID(char *fieldname); // enum tag 내가 붙임 -> Linux실행시 확�
 void main(int argc, char *argv[])
 {
 	FILE *fp;			// 모든 file processing operation은 C library를 사용할 것
-	fp = fopen(argv[2], "r+");
-	char recordBuf[RECORD_SIZE] = {0};
-	char hearder[HEADER_SIZE]; // 헤더 레코드
-	// char countPage[4]; // 레코드수를 표시
-	int reservedArea = 0; // 헤더에 들어갈 예약공간
-	int countPage = 0; // 헤더에 들어갈 전체 레코드 수
-	STUDENT student; // 85byte
-
-	int i,j;
-
-	// data file이 없을 때
-	if(access(argv[2], F_OK < 0)){							
-		fp = fopen(argv[2], "w");
-		countPage = 0;
-		reservedArea = 0;
-		// header record 구현
-		//	countPage값 전달
-		memset(hearder, 0xFF, sizeof(hearder));
-		memcpy(hearder, (char *)&countPage, sizeof(int));
-		//	reservedArea 구현
-		memcpy(hearder + 4, (char *)&reservedArea, sizeof(int));
-		fwrite((void*)hearder, sizeof(hearder), 1, fp);
+	if(access(argv[2], F_OK) < 0){
+		fp = fopen(argv[2], "w+");
+	} else {
+		fp = fopen(argv[2], "r+");
 	}
+	
+	STUDENT student; // 85byte
 
 	switch(argv[1][1]){
 		
@@ -60,17 +44,18 @@ void main(int argc, char *argv[])
 			break;
 		
 		case 'a':	// append option
-			if(argc < 7){
+			if(argc < 8){
 				fprintf(stderr, "Usage : %s -a <Filename> <Student ID> <Student name> <Student dept> <Student Addr> <Student Email> \n", argv[0]);
 				exit(1);
 			}
 			// bound 예외처리
 			// open 예외처리
-			// sscanf(argv[3], "%s", student.id);
-			// sscanf(argv[4], "%s", student.name);
-			// sscanf(argv[5], "%s", student.dept);
-			// sscanf(argv[6], "%s", student.addr);
-			// sscanf(argv[7], "%s", student.email);
+			
+			sscanf(argv[3], "%s", student.id);
+			sscanf(argv[4], "%s", student.name);
+			sscanf(argv[5], "%s", student.dept);
+			sscanf(argv[6], "%s", student.addr);
+			sscanf(argv[7], "%s", student.email);
 
 			appendRecord(fp, &student);
 			fclose(fp);
@@ -80,8 +65,7 @@ void main(int argc, char *argv[])
 			fprintf(stderr, "Wrong Option!\n");
 			break;
 	}
-	exit(0);
-
+	// exit(0);
 }
 
 void printRecord(const STUDENT *s)
@@ -99,20 +83,33 @@ int readRecord(FILE *fp, char *recordbuf, int rrn){
 	
 	if(rrn == 0){
 		rewind(fp);
-		fseek(fp, HEADER_SIZE, SEEK_SET);
-		if(fread(recordbuf, HEADER_SIZE, 1, fp) > 0) return 1;
+		fseek(fp, 0, SEEK_SET);
+		if(fread(recordbuf, HEADER_SIZE, 1, fp) > 0) {
+			printf("Header read in\n");
+			return 1;
+		}
 		else return 0;
+	// 레코드를 쓰는 경우 85바이트
 	} else {
+		printf("Real Record in\n");
 		rewind(fp);
-		fseek(fp, HEADER_SIZE + RECORD_SIZE * rrn, SEEK_SET);
+		fseek(fp, HEADER_SIZE + RECORD_SIZE * (rrn-1), SEEK_SET);
 		if(fread(recordbuf, RECORD_SIZE, 1, fp) > 0) return 1;
 		else return 0;
 	}
+
 }
 
 void unpack(const char *recordbuf, STUDENT *s){
 	
-	sprintf(recordbuf, "%[^#]%[^#]%[^#]%[^#]%[^#]", s->id, s->name, s->dept, s->addr, s->email);
+	// char unpackbuf[80];
+	int i;
+	for(i = 0; i<strlen(s->id); i++){
+		if(recordbuf[i] == '#'){
+			break;
+		}
+		s->id[i] = recordbuf[i];
+	}
 
 }
 
@@ -122,14 +119,20 @@ void unpack(const char *recordbuf, STUDENT *s){
 // 성공적으로 수행하면 '1'을, 그렇지 않으면 '0'을 리턴한다.
 //
 int writeRecord(FILE *fp, char *recordbuf, int rrn){
+	// 헤더 레코드만 쓰는 경우 8바이트
 	if(rrn == 0){
 		rewind(fp);
-		fseek(fp, HEADER_SIZE, SEEK_SET);
-		if(fwrite(recordbuf, HEADER_SIZE, 1, fp) > 0) return 1;
+		fseek(fp, 0, SEEK_SET);
+		if(fwrite(recordbuf, HEADER_SIZE, 1, fp) > 0) {
+			printf("Header Write in\n");
+			return 1;
+		}
 		else return 0;
+	// 레코드를 쓰는 경우 85바이트
 	} else {
+		printf("Real Record in\n");
 		rewind(fp);
-		fseek(fp, HEADER_SIZE + RECORD_SIZE * rrn, SEEK_SET);
+		fseek(fp, HEADER_SIZE + RECORD_SIZE * (rrn-1), SEEK_SET);
 		if(fwrite(recordbuf, RECORD_SIZE, 1, fp) > 0) return 1;
 		else return 0;
 	}
@@ -138,27 +141,26 @@ int writeRecord(FILE *fp, char *recordbuf, int rrn){
 void pack(char *recordbuf, const STUDENT *s){
 	// 일일히 packing 구현
 
-	// int i = 0;
-	// int j = 0;
-	// for(i = 0; i < strlen(s->id); i++){
-	// 	recordbuf[j++] = s->id[i];
-	// } recordbuf[j++] = '#';
-	// for(i = 0; i < strlen(s->name); i++){
-	// 	recordbuf[j++] = s->name[i];
-	// } recordbuf[j++] = '#';
-	// for(i = 0; i < strlen(s->dept); i++){
-	// 	recordbuf[j++] = s->dept[i];
-	// } recordbuf[j++] = '#';
-	// for(i = 0; i < strlen(s->addr); i++){
-	// 	recordbuf[j++] = s->addr[i];
-	// } recordbuf[j++] = '#';
-	// for(i = 0; i < strlen(s->email); i++){
-	// 	recordbuf[j++] = s->email[i];
-	// } recordbuf[j++] = '#';
+	int i = 0;
+	int j = 0;
+	for(i = 0; i < strlen(s->id); i++){
+		recordbuf[j++] = s->id[i];
+	} recordbuf[j++] = '#';
+	for(i = 0; i < strlen(s->name); i++){
+		recordbuf[j++] = s->name[i];
+	} recordbuf[j++] = '#';
+	for(i = 0; i < strlen(s->dept); i++){
+		recordbuf[j++] = s->dept[i];
+	} recordbuf[j++] = '#';
+	for(i = 0; i < strlen(s->addr); i++){
+		recordbuf[j++] = s->addr[i];
+	} recordbuf[j++] = '#';
+	for(i = 0; i < strlen(s->email); i++){
+		recordbuf[j++] = s->email[i];
+	} recordbuf[j++] = '#';
 
 	// sprintf로 packing 구현
-
-	sprintf(recordbuf, "%s#%s#%s#%s#%s#", s->id, s->name, s->dept, s->addr, s->email);
+	// sprintf(recordbuf, "%s#%s#%s#%s#%s#", s->id, s->name, s->dept, s->addr, s->email);
 
 }
 
@@ -172,29 +174,34 @@ void pack(char *recordbuf, const STUDENT *s){
 //
 int appendRecord(FILE *fp, STUDENT *s){
 
-	char recordbuf[RECORD_SIZE];
-	char headerbuf[HEADER_SIZE];
+	char recordbuf[RECORD_SIZE] = {0};
+	char headerbuf[8];
 	int count = 0;
-	int reseverdArea = 0;
+	int reservedArea = 0;
 	
-	// 헤더를 읽어와 현재 레코드 개수를 가져온다
+
+	// 헤더 읽어 들이기
+	fseek(fp, 0, SEEK_SET);
+	memset(headerbuf, 0, sizeof(HEADER_SIZE));
 	readRecord(fp, headerbuf, 0);
 	memcpy(&count, headerbuf, sizeof(int));
-	memcpy(&reseverdArea, headerbuf + 4, sizeof(int));
+	memcpy(&reservedArea, headerbuf + sizeof(int), sizeof(int));
 
 	// 입력값 packing
 	pack(recordbuf, s);
-
+	
 	if(count == 0){
+		printf("In\n");
 		count++;
+		memset(headerbuf, 0, sizeof(HEADER_SIZE));
 		memcpy(headerbuf, &count, sizeof(int));
-		memcpy(headerbuf + sizeof(int), &reseverdArea, sizeof(int));
+		memcpy(headerbuf + 4, &reservedArea, sizeof(int));
 		writeRecord(fp, headerbuf, 0);
 		if(writeRecord(fp, recordbuf, 1) > 0) return 1;
 	} else {
 		count++;
-		memcpy(&headerbuf, &count, sizeof(int));
-		// memcpy(&headerbuf + 4, &reseverdArea, sizeof(int));
+		memcpy(headerbuf, &count, sizeof(int));
+		memcpy(headerbuf + 4, &reservedArea, sizeof(int));
 		writeRecord(fp, headerbuf, 0);
 		if(writeRecord(fp, recordbuf, count) > 0) return 1;
 	}
