@@ -274,8 +274,6 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 	memset(&s.email, 0, sizeof(s.email));
 
 	char recordbuf[RECORD_SIZE];
-	
-
 	char idbuf[8] = {0};
 	char namebuf[10];
 	char deptbuf[12];
@@ -291,7 +289,6 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 	
  	if(f == ID){
 		for(int i = 0; i<rrn; i++){
-
 			fseek(fp, HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
 			fread(recordbuf, RECORD_SIZE, 1, fp);
 
