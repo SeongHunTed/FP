@@ -284,7 +284,7 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 	char deptbuf[12];
 	char addrbuf[30];
 	char emailbuf[20];
-	
+
 	memset(idbuf, 0, sizeof(idbuf));
 	memset(namebuf, 0, sizeof(namebuf));
 	memset(deptbuf, 0, sizeof(deptbuf));
@@ -296,10 +296,7 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 		for(int i = 0; i<rrn; i++){
 			fseek(fp, HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
 			fread(idbuf, 8, 1, fp);
-			printf("IDbuf : %s \n", idbuf);
-			printf("Keyvalue : %s\n", keyval);
-			printf("strcmp : %d\n", strcmp(keyval, idbuf));
-			if(strcmp(keyval, idbuf) == -3){
+			if(strcmp(keyval, idbuf) == 0){
 				printf("In\n");
 				readRecord(fp, &s, i);
 				printRecord(&s);
@@ -312,7 +309,7 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 			fseek(fp, 8 + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
 			fread(namebuf, 10, 1, fp);
 			printf("namebuf : %s\n", namebuf);
-			if(strcmp(keyval, namebuf) == -3){
+			if(strcmp(keyval, namebuf) == 0){
 				readRecord(fp, &s, i);
 				printf("strcmp : %d\n", strcmp(keyval, namebuf));
 				printRecord(&s);
