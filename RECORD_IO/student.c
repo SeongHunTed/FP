@@ -415,7 +415,7 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 				newbuf[j] = emailbuf[j];
 			}
 			newbuf[j] = '\0';
-			if(strcmp(keyval, bewbuf) == 0){
+			if(strcmp(keyval, newbuf) == 0){
 				readRecord(fp, &s, i);
 				printRecord(&s);
 			}	
