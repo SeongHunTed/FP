@@ -276,7 +276,7 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 	char recordbuf[RECORD_SIZE];
 	
 
-	char idbuf[8];
+	char idbuf[8] = {0};
 	char namebuf[10];
 	char deptbuf[12];
 	char addrbuf[30];
@@ -291,16 +291,18 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 	
  	if(f == ID){
 		for(int i = 0; i<rrn; i++){
+
 			fseek(fp, HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
-			fread(idbuf, 8, 1, fp);
+			fread(recordbuf, RECORD_SIZE, 1, fp);
+
+			char idbuf[8] = {0};
 			int j = 0;
-			char newidbuf[8] = {0};
 			for(j = 0; i<sizeof(idbuf); j++){
-				if(idbuf[j] == '#') break;
-				newidbuf[j] = namebuf[j];
+				if(recordbuf[j] == '#') break;
+				idbuf[j] = recordbuf[j];
 			}
-			newidbuf[j] = '\0';
-			if(strcmp(keyval, newidbuf) == 0){
+			idbuf[j] = '\0';
+			if(strcmp(keyval, idbuf) == 0){
 				readRecord(fp, &s, i);
 				printRecord(&s);
 			}	
