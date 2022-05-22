@@ -297,7 +297,6 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 			fseek(fp, HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
 			fread(idbuf, 8, 1, fp);
 			if(strcmp(keyval, idbuf) == 0){
-				printf("In\n");
 				readRecord(fp, &s, i);
 				printRecord(&s);
 			}	
@@ -306,12 +305,17 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 
 	if(f == NAME){
 		for(int i = 0; i<rrn; i++){
-			fseek(fp, 8 + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
+			fseek(fp, 9 + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
 			fread(namebuf, 10, 1, fp);
-			printf("namebuf : %s\n", namebuf);
-			if(strcmp(keyval, namebuf) == 0){
+			char newnamebuf[10] = {0};
+			int j = 0;
+			for(j = 0; i<sizeof(namebuf); j++){
+				if(namebuf[j] == '#') break;
+				newnamebuf[j] = namebuf[j];
+			}
+			newnamebuf[j] = '\0';
+			if(strcmp(keyval, newnamebuf) == 0){
 				readRecord(fp, &s, i);
-				printf("strcmp : %d\n", strcmp(keyval, namebuf));
 				printRecord(&s);
 			}	
 		}
@@ -319,9 +323,16 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 
 	if(f == DEPT){
 		for(int i = 0; i<rrn; i++){
-			fseek(fp, 18 + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
+			fseek(fp, 19 + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
 			fread(deptbuf, 8, 1, fp);
-			if(strcmp(keyval, deptbuf) == 0){
+			char newbuf[12] ={0};
+			int j = 0;
+			for(j = 0; i<sizeof(deptbuf); j++){
+				if(deptbuf[j] == '#') break;
+				newbuf[j] = deptbuf[j];
+			}
+			newbuf[j] = '\0';
+			if(strcmp(keyval, newbuf) == 0){
 				readRecord(fp, &s, i);
 				printRecord(&s);
 			}	
@@ -330,9 +341,16 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 
 	if(f == ADDR){
 		for(int i = 0; i<rrn; i++){
-			fseek(fp, 30 + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
+			fseek(fp, 31 + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
 			fread(addrbuf, 8, 1, fp);
-			if(strcmp(keyval, addrbuf) == 0){
+			char newbuf[30] = {0};
+			int j = 0;
+			for(j = 0; i<sizeof(addrbuf); j++){
+				if(addrbuf[j] == '#') break;
+				newbuf[j] = addrbuf[j];
+			}
+			newbuf[j] = '\0';
+			if(strcmp(keyval, newbuf) == 0){
 				readRecord(fp, &s, i);
 				printRecord(&s);
 			}	
@@ -341,8 +359,15 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 
 	if(f == EMAIL){
 		for(int i = 0; i<rrn; i++){
-			fseek(fp, 60 + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
+			fseek(fp, 61 + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
 			fread(emailbuf, 8, 1, fp);
+			char newbuf[20] = {0};
+			int j = 0;
+			for(j = 0; i<sizeof(emailbuf); j++){
+				if(emailbuf[j] == '#') break;
+				newbuf[j] = emailbuf[j];
+			}
+			newbuf[j] = '\0';
 			if(strcmp(keyval, emailbuf) == 0){
 				readRecord(fp, &s, i);
 				printRecord(&s);
