@@ -88,7 +88,6 @@ void main(int argc, char *argv[])
 			char enumbuf[35] = {0};
 			sscanf(argv[3], "%s", enumbuf);
 			enum FIELD f = getFieldID(enumbuf);
-			printf("FIELD : %d\n", f);
 
 			searchRecord(fp, f, keyvalue);
 			fclose(fp);
@@ -173,7 +172,6 @@ int appendRecord(FILE *fp, char *id, char *name, char *dept, char *addr, char *e
 	memcpy(&reservedArea, headerbuf + sizeof(int), sizeof(int));
 
 	if(count == 0){
-		printf("There was no Head\n");
 		count++;
 		memset(headerbuf, 0, sizeof(HEADER_SIZE));
 		memcpy(headerbuf, &count, sizeof(int));
@@ -182,7 +180,6 @@ int appendRecord(FILE *fp, char *id, char *name, char *dept, char *addr, char *e
 		fwrite(headerbuf, HEADER_SIZE, 1, fp);
 		if(writeRecord(fp, &s, 1) > 0) return 1;
 	} else {
-		printf("DATA Existed\n");
 		count++;
 		memset(headerbuf, 0, sizeof(HEADER_SIZE));
 		memcpy(headerbuf, &count, sizeof(int));
@@ -278,6 +275,8 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 	memset(&s.addr, 0, sizeof(s.addr));
 	memset(&s.email, 0, sizeof(s.email));
 
+	char recordbuf[RECORD_SIZE];
+	
 
 	char idbuf[8];
 	char namebuf[10];
@@ -296,6 +295,13 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 		for(int i = 0; i<rrn; i++){
 			fseek(fp, HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
 			fread(idbuf, 8, 1, fp);
+			int j = 0;
+			char newidbuf[8] = {0};
+			for(j = 0; i<sizeof(idbuf); j++){
+				if(idbuf[j] == '#') break;
+				newidbuf[j] = namebuf[j];
+			}
+			newidbuf[j] = '\0';
 			if(strcmp(keyval, idbuf) == 0){
 				readRecord(fp, &s, i);
 				printRecord(&s);
@@ -305,7 +311,22 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 
 	if(f == NAME){
 		for(int i = 0; i<rrn; i++){
-			fseek(fp, 9 + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
+
+			int count = 0; // 딜리미터 카운트
+
+			// 딜리미터 카운트를 위해 record를 가져옴
+			fseek(fp, HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
+			fread(recordbuf, RECORD_SIZE, 1, fp);
+
+			// 딜리미터 카운트 부분
+			int k = 0;
+			for(k = 0; k < RECORD_SIZE; k++){
+				if(count == 1) break;
+				if(recordbuf[k] == '#') count++;
+			}
+
+			// 해당 정보를 가져옴
+			fseek(fp, k + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
 			fread(namebuf, 10, 1, fp);
 			char newnamebuf[10] = {0};
 			int j = 0;
@@ -323,11 +344,19 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 
 	if(f == DEPT){
 		for(int i = 0; i<rrn; i++){
-			fseek(fp, 19 + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
-			fread(deptbuf, 8, 1, fp);
+			int count = 0;
+			int k = 0;
+			fseek(fp, HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
+			fread(recordbuf, RECORD_SIZE, 1, fp);
+			for(k = 0; k < RECORD_SIZE; k++){
+				if(count == 2) break;
+				if(recordbuf[k] == '#') count++;
+			}
+			fseek(fp, k + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
+			fread(deptbuf, 12, 1, fp);
 			char newbuf[12] ={0};
 			int j = 0;
-			for(j = 0; i<sizeof(deptbuf); j++){
+			for(j = 0; i < 12; j++){
 				if(deptbuf[j] == '#') break;
 				newbuf[j] = deptbuf[j];
 			}
@@ -341,8 +370,16 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 
 	if(f == ADDR){
 		for(int i = 0; i<rrn; i++){
-			fseek(fp, 31 + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
-			fread(addrbuf, 8, 1, fp);
+			int count = 0;
+			int k = 0;
+			fseek(fp, HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
+			fread(recordbuf, RECORD_SIZE, 1, fp);
+			for(k = 0; k < RECORD_SIZE; k++){
+				if(count == 3) break;
+				if(recordbuf[k] == '#') count++;
+			}
+			fseek(fp, k + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
+			fread(addrbuf, 30, 1, fp);
 			char newbuf[30] = {0};
 			int j = 0;
 			for(j = 0; i<sizeof(addrbuf); j++){
@@ -359,8 +396,18 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 
 	if(f == EMAIL){
 		for(int i = 0; i<rrn; i++){
-			fseek(fp, 61 + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
-			fread(emailbuf, 8, 1, fp);
+			int count = 0;
+			fseek(fp, HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
+			fread(recordbuf, RECORD_SIZE, 1, fp);
+			int k = 0;
+			for(k = 0; k < RECORD_SIZE; k++){
+				if(count == 4) break;
+				if(recordbuf[k] == '#') count++;
+			}
+
+			fseek(fp, k + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
+			fread(emailbuf, 20, 1, fp);
+
 			char newbuf[20] = {0};
 			int j = 0;
 			for(j = 0; i<sizeof(emailbuf); j++){
