@@ -302,7 +302,7 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 				newidbuf[j] = namebuf[j];
 			}
 			newidbuf[j] = '\0';
-			if(strcmp(keyval, idbuf) == 0){
+			if(strcmp(keyval, newidbuf) == 0){
 				readRecord(fp, &s, i);
 				printRecord(&s);
 			}	
@@ -415,7 +415,7 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 				newbuf[j] = emailbuf[j];
 			}
 			newbuf[j] = '\0';
-			if(strcmp(keyval, emailbuf) == 0){
+			if(strcmp(keyval, bewbuf) == 0){
 				readRecord(fp, &s, i);
 				printRecord(&s);
 			}	
