@@ -82,7 +82,6 @@ void main(int argc, char *argv[])
 					break;
 				}
 			}
-			printf("Keyvalue : %s \n", keyvalue);
 
 			// field_name ºÐ·ù
 			char enumbuf[35] = {0};
@@ -197,7 +196,6 @@ int readRecord(FILE *fp, STUDENT *s, int rrn)
 	rewind(fp);
 	char recordbuf[RECORD_SIZE] ={0};
 
-	printf("%d \n", HEADER_SIZE + RECORD_SIZE * rrn);
 	fseek(fp, HEADER_SIZE + (RECORD_SIZE * rrn), SEEK_SET);
 	if(fread(recordbuf, RECORD_SIZE, 1, fp) > 0){
 		unpack(recordbuf, s);
@@ -407,7 +405,6 @@ void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 
 			fseek(fp, k + HEADER_SIZE + RECORD_SIZE * i, SEEK_SET);
 			fread(emailbuf, 20, 1, fp);
-
 			char newbuf[20] = {0};
 			int j = 0;
 			for(j = 0; i<sizeof(emailbuf); j++){
