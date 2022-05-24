@@ -89,7 +89,6 @@ void main(int argc, char *argv[])
 			enum FIELD f = getFieldID(enumbuf);
 
 			searchRecord(fp, f, keyvalue);
-			fclose(fp);
 			break;
 		
 		case 'a':	// append option
@@ -107,16 +106,14 @@ void main(int argc, char *argv[])
 			sscanf(argv[7], "%s", s.email);
 
 			appendRecord(fp, s.id, s.name, s.dept, s.addr, s.email);
-			fclose(fp);
-			
+
 			break;
 		default:
 			fprintf(stderr, "Wrong Option!\n");
-			fclose(fp);
-			
 			break;
 	}
 	fclose(fp);
+	fp = NULL;
 }
 
 int writeRecord(FILE *fp, const STUDENT *s, int rrn)
