@@ -253,13 +253,6 @@ void unpack(const char *recordbuf, STUDENT *s)
 
 }
 
-//
-// 학생 레코드 파일에서 검색 키값을 만족하는 레코드가 존재하는지를 sequential search 기법을 
-// 통해 찾아내고, 이를 만족하는 모든 레코드의 내용을 출력한다. 검색 키는 학생 레코드를 구성하는
-// 어떤 필드도 가능하다. 내부적으로 readRecord() 함수를 호출하여 sequential search를 수행한다.
-// 검색 결과를 출력할 때 반드시 printRecord() 함수를 사용한다. (반드시 지켜야 하며, 그렇지
-// 않는 경우 채점 프로그램에서 자동적으로 틀린 것으로 인식함)
-//
 void searchRecord(FILE *fp, enum FIELD f, char *keyval)
 {	
 	rewind(fp);
