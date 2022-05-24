@@ -112,6 +112,8 @@ void main(int argc, char *argv[])
 			break;
 		default:
 			fprintf(stderr, "Wrong Option!\n");
+			fclose(fp);
+			
 			break;
 	}
 	fclose(fp);
