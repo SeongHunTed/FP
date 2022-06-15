@@ -135,7 +135,6 @@ void main(int argc, char *argv[])
 				keyvalue[i] = argv[3][3+i];
 			}
 			keyvalue[8] = '\0';
-			printf("%s \n", keyvalue);
 
 			// field_name ºÐ·ù
 			memset(enumbuf, (char)0xFF, sizeof(enumbuf));
@@ -218,8 +217,6 @@ int appendRecord(FILE *fp, char *id, char *name, char *dept, char *addr, char *e
 	fseek(fp, 0, SEEK_SET);
 	fread(&count, sizeof(int), 1, fp);
 	fread(&reservedArea, sizeof(int), 1, fp);
-	printf("count : %d\n", count);
-	printf("reservedarea : %d\n", reservedArea);
 
 	if(count == 0){
 		count++;
@@ -498,7 +495,6 @@ int deleteRecord(FILE *fp, enum FIELD f, char *keyval){
 
 	rewind(fp);
 	char deletebuf[RECORD_SIZE] = {0};
-	// char recordbuf[RECORD_SIZE] = {0};
 	char idbuf[9] = {0};
 	char symbol = '*';
 	int reservedArea = 0;
