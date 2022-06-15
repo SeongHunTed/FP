@@ -48,6 +48,21 @@ void printRecord(const STUDENT *s);
 //
 enum FIELD getFieldID(char *fieldname);
 
+//
+// 학생 레코드 파일에서 "학번" 키값을 만족하는 레코드를 찾아서 이것을 삭제한다.
+// 참고로, 검색 조건은 반드시 학번(ID)만을 사용한다. 레코드의 검색은 searchRecord() 함수와
+// 유사한 방식으로 구현한다. 성공적으로 수행하면 '1'을, 그렇지 않으면 '0'을 리턴한다.
+//
+int deleteRecord(FILE *fp, enum FIELD f, char *keyval);
+
+//
+// 학생 레코드 파일에 새로운 레코드를 추가한다. 과제 설명서에서 언급한 대로, 삭제 레코드가
+// 존재하면 반드시 삭제 레코드들 중 하나에 새로운 레코드를 저장한다. 삭제 레코드 리스트 관리와
+// 삭제 레코드의 선택은 교재 방식을 따른다. 새로운 레코드의 추가는 appendRecord() 함수와 비슷한
+// 방식으로 구현한다. 성공적으로 수행하면 '1'을, 그렇지 않으면 '0'을 리턴한다.
+//
+int insertRecord(FILE *fp, char *id, char *name, char *dept, char *addr, char *email);
+
 void main(int argc, char *argv[])
 {
 	FILE *fp;			// 모든 file processing operation은 C library를 사용할 것
@@ -108,6 +123,42 @@ void main(int argc, char *argv[])
 			appendRecord(fp, s.id, s.name, s.dept, s.addr, s.email);
 
 			break;
+		
+		case 'd':
+			if(argc < 3){
+				printf("Usage : -d <Filename> <ID=0000000>");
+				break;
+			}
+			// keyvalue 분류
+			memset(keyvalue, (char)0xFF, sizeof(keyvalue));
+			for(i = 0; i < 8; i++){
+				keyvalue[i] = argv[3][3+i];
+			}
+			keyvalue[8] = '\0';
+			printf("%s \n", keyvalue);
+
+			// field_name 분류
+			memset(enumbuf, (char)0xFF, sizeof(enumbuf));
+			sscanf(argv[3], "%s", enumbuf);
+			f = getFieldID(enumbuf);
+			deleteRecord(fp, f, keyvalue);
+			break;
+
+		case 'i':
+			if(argc < 8){
+				fprintf(stderr, "Usage : %s -a <Filename> <Student ID> <Student name> <Student dept> <Student Addr> <Student Email> \n", argv[0]);
+				break;
+			}
+
+			sscanf(argv[3], "%s", s.id);
+			sscanf(argv[4], "%s", s.name);
+			sscanf(argv[5], "%s", s.dept);
+			sscanf(argv[6], "%s", s.addr);
+			sscanf(argv[7], "%s", s.email);
+
+			insertRecord(fp, s.id, s.name, s.dept, s.addr, s.email);
+			break;
+
 		default:
 			fprintf(stderr, "Wrong Option!\n");
 			break;
@@ -160,22 +211,25 @@ int appendRecord(FILE *fp, char *id, char *name, char *dept, char *addr, char *e
 	
 	char headerbuf[8] = {0};
 	int count = 0;
-	int reservedArea = 0;
+	int reservedArea = -1;
+
 
 	// 헤더 읽어 들이기
 	fseek(fp, 0, SEEK_SET);
-	memset(headerbuf, 0, sizeof(HEADER_SIZE));
-	fread(headerbuf, HEADER_SIZE, 1, fp);
-	memcpy(&count, headerbuf, sizeof(int));
-	memcpy(&reservedArea, headerbuf + sizeof(int), sizeof(int));
+	fread(&count, sizeof(int), 1, fp);
+	fread(&reservedArea, sizeof(int), 1, fp);
+	printf("count : %d\n", count);
+	printf("reservedarea : %d\n", reservedArea);
 
 	if(count == 0){
 		count++;
 		memset(headerbuf, 0, sizeof(HEADER_SIZE));
 		memcpy(headerbuf, &count, sizeof(int));
-		memcpy(headerbuf + 4, &reservedArea, sizeof(int));
+		// memcpy(headerbuf + 4, &reservedArea, sizeof(int));
 		fseek(fp, 0, SEEK_SET);
 		fwrite(headerbuf, HEADER_SIZE, 1, fp);
+		fseek(fp, 4, SEEK_SET);
+		fwrite(&reservedArea, sizeof(int), 1, fp);
 		if(writeRecord(fp, &s, 1) > 0) return 1;
 	} else {
 		count++;
@@ -438,4 +492,94 @@ enum FIELD getFieldID(char *fieldname)
 	else if(strcmp(enumcheck, "ADDR") == 0) return ADDR;
 	else if(strcmp(enumcheck, "EMAIL") == 0) return EMAIL;
 	else return 0;
+}
+
+int deleteRecord(FILE *fp, enum FIELD f, char *keyval){
+
+	rewind(fp);
+	char deletebuf[RECORD_SIZE] = {0};
+	// char recordbuf[RECORD_SIZE] = {0};
+	char idbuf[9] = {0};
+	char symbol = '*';
+	int reservedArea = 0;
+	int rrn = 0;
+
+	// rrn 가져오기
+	fseek(fp, 0, SEEK_SET);
+	fread(&rrn, sizeof(int), 1, fp);
+
+	// reservedArea 가져오기
+	fseek(fp, 4, SEEK_SET);
+	fread(&reservedArea, sizeof(int), 1, fp);
+
+	for(int i = 0; i < rrn; i++){
+		fseek(fp, HEADER_SIZE + i * RECORD_SIZE, SEEK_SET);
+		fread(idbuf, sizeof(idbuf), 1, fp);
+		idbuf[8] = '\0';
+
+		if(strcmp(keyval, idbuf) == 0){
+			fseek(fp, HEADER_SIZE + i * RECORD_SIZE, SEEK_SET);
+			memcpy(deletebuf, &symbol, sizeof(symbol));
+			fwrite(deletebuf, sizeof(deletebuf), 1, fp);
+			fseek(fp, 1 + HEADER_SIZE + i * RECORD_SIZE, SEEK_SET);
+			fwrite(&reservedArea, sizeof(int), 1, fp);
+			fseek(fp, 4, SEEK_SET);
+			fwrite(&i, sizeof(i), 1, fp);
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+//
+// 학생 레코드 파일에 새로운 레코드를 추가한다. 과제 설명서에서 언급한 대로, 삭제 레코드가
+// 존재하면 반드시 삭제 레코드들 중 하나에 새로운 레코드를 저장한다. 삭제 레코드 리스트 관리와
+// 삭제 레코드의 선택은 교재 방식을 따른다. 새로운 레코드의 추가는 appendRecord() 함수와 비슷한
+// 방식으로 구현한다. 성공적으로 수행하면 '1'을, 그렇지 않으면 '0'을 리턴한다.
+//
+int insertRecord(FILE *fp, char *id, char *name, char *dept, char *addr, char *email){
+	
+	rewind(fp);
+
+	STUDENT s;
+	sscanf(id, "%s", s.id);
+	sscanf(name, "%s", s.name);
+	sscanf(dept, "%s", s.dept);
+	sscanf(addr, "%s", s.addr);
+	sscanf(email, "%s", s.email);
+
+	// 헤더와 이전 삭제 레코드 rrn
+	int count = 0;
+	int reservedArea = 0;
+	int prevReserved = 0;
+
+	// 가장 최근에 삭제된 레코드
+	fseek(fp, 4, SEEK_SET);
+	fread(&reservedArea, sizeof(int), 1, fp);
+
+	// 삭제된 레코드가 있는경우
+	if(reservedArea > -1){
+		fseek(fp, 1 + HEADER_SIZE + reservedArea * RECORD_SIZE, SEEK_SET);
+		fread(&prevReserved, sizeof(int), 1, fp);
+		// 이전 레코드 값 헤더에 업데이트
+		fseek(fp, 4, SEEK_SET);
+		fwrite(&prevReserved, sizeof(int), 1, fp);
+		// insert할 레코드 정보 쓰기
+		writeRecord(fp, &s, reservedArea + 1);
+		return 1;
+	} else {			// 삭제된 레코드가 없는 경우
+		// count값 가져와서 증가시키기
+		fseek(fp, 0, SEEK_SET);
+		fread(&count, sizeof(int), 1, fp);
+		count++;
+		fseek(fp, 0, SEEK_SET);
+		fwrite(&count, sizeof(int), 1, fp);
+		// appendRecord와 같이 수행
+		writeRecord(fp, &s, count);
+		return 1;
+	}
+
+	return 0;
+
 }
