@@ -575,7 +575,6 @@ int insertRecord(FILE *fp, char *id, char *name, char *dept, char *addr, char *e
 		writeRecord(fp, &s, count);
 		return 1;
 	}
-
 	return 0;
 
 }
